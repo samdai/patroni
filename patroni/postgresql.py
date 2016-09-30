@@ -51,6 +51,7 @@ class Postgresql(object):
         self.replication = config['replication']
         self.superuser = config.get('superuser') or {}
         self.admin = config.get('admin') or {}
+        self.extensions = config.get('extensions') or {}
 
         self.initdb_options = config.get('initdb') or []
         self.pgpass = config.get('pgpass') or os.path.join(os.path.expanduser('~'), 'pgpass')
@@ -718,6 +719,11 @@ $$""".format(name, options), name, password, password)
         if not (cluster_initialized or clone_member):
             ret = self.initialize() and self.start()
             if ret:
+                for extension in self.extensions:
+                  if "-" not in extension:
+                   self.query("create extension " + extension)
+                  else:
+                   self.query("create extension \"" + extension + "\"")
                 self.create_replication_user()
                 self.create_connection_user()
             else:
